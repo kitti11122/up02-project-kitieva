@@ -1,96 +1,100 @@
-"""Загрузка товаров из БД с расширенным выводом."""
+"""Загрузка товаров из БД в объекты класса Product."""
 import sqlite3
 from config import DB_PATH
+from models import Product
 
 
 def get_all_products():
+    """Возвращает список объектов Product из БД."""
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("SELECT * FROM Товар ORDER BY id")
-    products = cur.fetchall()
+    rows = cur.fetchall()
     conn.close()
+
+    products = []
+    for row in rows:
+        # Реальная структура таблицы: id, жанр, автор, название, цена, количество, обложка
+        product = Product(
+            product_id=int(row[0]),   # id
+            name=row[3],              # название
+            category=row[1],          # жанр (используем как категорию)
+            price=float(row[4]),      # цена
+            quantity=int(row[5])      # количество
+        )
+        products.append(product)
     return products
 
 
 def get_products_by_category(category):
-    """Товары по жанру."""
+    """Возвращает список объектов Product по категории (жанру)."""
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    # Ищем по колонке 'жанр'
     cur.execute("SELECT * FROM Товар WHERE жанр = ?", (category,))
-    products = cur.fetchall()
+    rows = cur.fetchall()
     conn.close()
+
+    products = []
+    for row in rows:
+        product = Product(
+            product_id=int(row[0]),
+            name=row[3],
+            category=row[1],
+            price=float(row[4]),
+            quantity=int(row[5])
+        )
+        products.append(product)
     return products
 
 
 def get_products_low_stock():
-    """Товары с количеством ≤ 3."""
+    """Возвращает товары с количеством ≤ 3."""
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("SELECT * FROM Товар WHERE количество <= 3")
-    products = cur.fetchall()
+    rows = cur.fetchall()
     conn.close()
+
+    products = []
+    for row in rows:
+        product = Product(
+            product_id=int(row[0]),
+            name=row[3],
+            category=row[1],
+            price=float(row[4]),
+            quantity=int(row[5])
+        )
+        products.append(product)
     return products
 
 
-def get_categories():
-    """Список всех жанров."""
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    # Берем уникальные значения из колонки 'жанр'
-    cur.execute("SELECT DISTINCT жанр FROM Товар ORDER BY жанр")
-    categories = [row[0] for row in cur.fetchall()]
-    conn.close()
-    return categories
+def print_products(products):
+    """Выводит информацию о товарах."""
+    print(f"\nВсего товаров: {len(products)}\n")
+    for p in products:
+        print(p.info())
+        print("-" * 60)
 
 
-def print_catalog(products):
-    """Каталог с индикатором."""
-    print(f"\n{'=' * 60}")
+def print_catalog_with_highlight(products):
+    """Выводит каталог с подсветкой для товаров ≤3."""
+    print(f"\n{'=' * 70}")
     print(f"КАТАЛОГ ({len(products)} товаров)")
-    print("=" * 60)
+    print("=" * 70)
 
     for p in products:
-        # Индексы под вашу таблицу:
-        # p[0] = id
-        # p[1] = жанр
-        # p[2] = автор
-        # p[3] = название
-        # p[4] = цена
-        # p[5] = количество
-        # p[6] = обложка
-        
-        genre = p[1]
-        author = p[2]
-        name = p[3]
-        price = p[4]
-        qty = p[5]
+        highlight = "⚠️" if p.quantity <= 3 else "  "
+        print(f"{highlight} {p.info()}")
 
-        # Преобразуем в числа на случай, если БД вернула строки
-        try:
-            price = float(price)
-            qty = int(qty)
-        except (ValueError, TypeError):
-            print(f"⚠️ Ошибка данных: {name} — цена: {price}, кол-во: {qty}")
-            continue
-
-        indicator = "много" if qty > 5 else "мало"
-        highlight = "⚠️" if qty <= 3 else "  "
-
-        # Выводим: Название (Жанр, Автор)
-        print(f"{highlight} {name} ({genre}, {author})")
-        print(f"   Цена: {price} руб. | Кол-во: {qty} ({indicator})")
-
-    print("=" * 60)
+    print("=" * 70)
 
 
 if __name__ == "__main__":
-    print("1. Все товары")
-    print_catalog(get_all_products())
+    print("1. Все товары:")
+    print_catalog_with_highlight(get_all_products())
 
-    print("\n2. Жанры:")
-    for cat in get_categories():
-        print(f"   - {cat}")
+    print("\n2. Товары жанра «Роман»:")
+    print_catalog_with_highlight(get_products_by_category("Роман"))
 
     print("\n3. Товары с низким остатком (≤3):")
-    print_catalog(get_products_low_stock())
+    print_catalog_with_highlight(get_products_low_stock())
