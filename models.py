@@ -38,11 +38,7 @@ class Product:
 
     def discounted_price(self):
         """Цена со скидкой 25% (упрощённо)."""
-
         return self.price * 0.75
-
-        return self.price * 0.75
-
 
     def indicator(self):
         """Индикатор «много/мало» (порог 5)."""
@@ -90,3 +86,7 @@ class Order:
             f"Заказ №{self.id} от {self.date}: "
             f"{self.client} — {self.product.name} × {self.quantity}"
         )
+
+    def order_info(self):
+        """Краткая информация о заказе (без товара)."""
+        return f"Заказ №{self.id} от {self.date}: {self.client}"
