@@ -32,10 +32,45 @@ class Product:
         """Индикатор «много/мало» (порог 5)."""
         return "много" if self.quantity > 5 else "мало"
 
+    def is_available(self):
+        """True, если товар есть в наличии (количество > 0)."""
+        return self.quantity > 0
+
     def info(self):
         """Строка с информацией о товаре."""
         return (
             f"{self.name} ({self.category}): "
             f"{self.price} руб. × {self.quantity} = {self.total()} руб. "
             f"({self.indicator()})"
+        )
+
+
+class Order:
+    """Класс Заказ."""
+
+    def __init__(self, order_id, date, client, product, quantity):
+        """
+        Инициализация заказа.
+
+        :param order_id: номер заказа
+        :param date: дата заказа
+        :param client: имя клиента
+        :param product: объект Product
+        :param quantity: количество единиц товара в заказе
+        """
+        self.id = order_id
+        self.date = date
+        self.client = client
+        self.product = product      
+        self.quantity = quantity
+
+    def total(self):
+        """Стоимость заказа."""
+        return self.product.price * self.quantity
+
+    def info(self):
+        """Строка с информацией о заказе."""
+        return (
+            f"Заказ №{self.id} от {self.date}: "
+            f"{self.client} — {self.product.name} × {self.quantity}"
         )
