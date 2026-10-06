@@ -36,6 +36,10 @@ class Product:
             date = datetime.now()
         return calculate_price_with_discount(self.id, self.price, date)
 
+    def discounted_price(self):
+        """Цена со скидкой 25% (упрощённо)."""
+        return self.price * 0.75
+
     def indicator(self):
         """Индикатор «много/мало» (порог 5)."""
         return "много" if self.quantity > 5 else "мало"
