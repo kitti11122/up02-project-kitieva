@@ -1,0 +1,30 @@
+* 5a902e7 Добавлен important.txt, лог и tmp проигнорированы
+* 402821f Добавлен .gitignore с правилами для Python
+* 6b75c93 ДЗ: работа с удалённым репозиторием
+*   83c076b ДЗ: работа с удалённым репозиторием
+|\  
+| * 02ca686 Update README.md
+* | 6dcd711 Локальное изменение README
+|/  
+* e081f0a Локальное изменение
+*   80dcc0d Merge pull request #2 from kitti11122/feature/homework-8
+|\  
+| * 347c991 Добавлен файл homework_info.txt
+|/  
+*   e2cdf84 Разрешён конфликт с GitHub
+|\  
+| * 3a1d16e Update README.md
+* | 87ca2c1 Локальное изменение README
+|/  
+*   769a5a7 Merge pull request #1 from kitti11122/feature/remote-test
+|\  
+| * ce882c4 Добавлен файл в ветке feature/remote-test
+|/  
+* 09842b3 Update README.md
+* 6c6c0e4 Добавлен метод is_available
+* 9488843 ДЗ: работа с ветками и конфликтами
+*   15dd720 Разрешён конфликт в README.md
+|\  
+| * 04d56c4 README: изменение из ветки conflict-2
+* | 0123b57 README: изменение из main
+|/  
