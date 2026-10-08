@@ -55,6 +55,11 @@ class Product:
             f"{self.price} руб. × {self.quantity} = {self.total()} руб. "
             f"({self.indicator()})"
         )
+    
+    def is_available(self):
+        """Товар доступен для заказа?"""
+        return self.quantity > 0
+
 
 
 class Order:
