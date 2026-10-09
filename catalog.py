@@ -67,4 +67,6 @@ def create_product_card(parent, product):
              font=(FONT_FAMILY, 14, "bold"),
              bg=bg_color, anchor="e").pack(fill="x")
 
+    tk.Frame(parent, height=2, bd=1, relief="sunken").pack(fill="x", padx=5)
+
     return card
