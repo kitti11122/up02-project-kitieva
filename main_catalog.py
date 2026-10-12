@@ -1,13 +1,4 @@
-"""Главное окно с каталогом.
-
-============================================================
-ЗАДАНИЕ ДЛЯ СТУДЕНТА (ВЫПОЛНЕНО) — Задания 5.3, 6.2, 7.4:
-1. ✅ Логотип в шапке (с сохранением пропорций)
-2. ✅ Иконка приложения (кроссплатформенно)
-3. ✅ Импорт стилей из styles.py
-4. ✅ Шрифт Calibri, цвета из КИМ
-============================================================
-"""
+"""Главное окно с каталогом книг"""
 import tkinter as tk
 from tkinter import ttk
 import os
@@ -19,6 +10,7 @@ import database as db
 from catalog import create_product_card
 from resources import (load_image_proportional,
                         PATH_LOGO, PATH_ICON)
+from error_handler import safe_call
 
 
 class CatalogWindow:
@@ -35,7 +27,7 @@ class CatalogWindow:
         self.load_products()
 
     def set_icon(self):
-        """Устанавливает иконку приложения (кроссплатформенно)."""
+        """Устанавливает иконку приложения"""
         try:
             if os.name == "nt":  # Windows
                 if os.path.exists(PATH_ICON):
@@ -91,9 +83,20 @@ class CatalogWindow:
         scrollbar.pack(side="right", fill="y")
 
     def load_products(self):
-        products = db.get_all_products()
+
+        """Загружает товары с обработкой ошибок."""
+
+        products = safe_call(db.get_all_products) or []
+
         for p in products:
-            create_product_card(self.catalog_frame, p)
+            safe_call(create_product_card, self.catalog_frame, p,
+                      refresh=self.refresh_catalog)
+
+    def refresh_catalog(self):
+        """Обновляет каталог."""
+        for widget in self.catalog_frame.winfo_children():
+            widget.destroy()
+        self.load_products()
 
     def run(self):
         self.root.mainloop()

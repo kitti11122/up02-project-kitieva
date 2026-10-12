@@ -1,4 +1,4 @@
-"""Каталог книг (библиотека)."""
+"""Каталог книг"""
 import tkinter as tk
 from datetime import datetime
 
@@ -15,9 +15,10 @@ def create_product_card(parent, product, refresh=None):
     """
     Создаёт карточку книги по макету.
 
-    Индексы таблицы Товар (библиотека):
-    [0] id, [1] жанр, [2] автор, [3] название,
-    [4] цена, [5] количество, [6] обложка
+    :param parent: родительский контейнер
+    :param product: кортеж с данными книги
+    :param refresh: callback для обновления каталога
+    :return: созданный Frame
     """
     qty = int(product[5])
     bg_color = _get_card_color(qty)
@@ -28,24 +29,26 @@ def create_product_card(parent, product, refresh=None):
     _add_image(card, product, bg_color)
     _add_text_info(card, product, bg_color, qty)
 
+
+    def on_click(event, p=product):
+        _open_view(parent, p, refresh)
+
+    card.bind("<Button-1>", on_click)
+    for child in card.winfo_children():
+        child.bind("<Button-1>", on_click)
+        for sub in child.winfo_children():
+            sub.bind("<Button-1>", on_click)
+
     return card
 
 
 def _get_card_color(qty):
-    """
-    Возвращает цвет фона карточки.
-
-  
-    """
+    """Возвращает цвет фона карточки (подсветка ≤3)."""
     return COLOR_HIGHLIGHT if qty <= 3 else COLOR_MAIN_BG
 
 
 def _add_image(card, product, bg_color):
-    """
-    Добавляет изображение товара (или заглушку).
-
-
-    """
+    """Добавляет изображение книги (или заглушку)."""
     img_frame = tk.Frame(card, bg=bg_color)
     img_frame.pack(side="left", padx=10, pady=10)
 
@@ -62,16 +65,12 @@ def _add_image(card, product, bg_color):
 
 
 def _add_text_info(card, product, bg_color, qty):
-    """
-    Добавляет текстовую информацию о книге.
-
-    ✅ ЗАДАНИЕ (ВЫПОЛНЕНО): обработка крайних случаев.
-    """
+    """Добавляет текстовую информацию о книге."""
     text_frame = tk.Frame(card, bg=bg_color)
     text_frame.pack(side="left", fill="both", expand=True,
                     padx=10, pady=10)
 
-    # ---- Обработка крайних случаев ----
+  
     author = product[2] if product[2] else "[Без автора]"
     title = product[3] if product[3] else "[Без названия]"
     genre = product[1] if product[1] else "[Без жанра]"
@@ -84,7 +83,7 @@ def _add_text_info(card, product, bg_color, qty):
     except Exception:
         final_price = price
 
-    # ---- Вывод полей ----
+  
     _add_label(text_frame, f"{author} | {title}",
                bg_color, bold=True, size=FONT_SIZE_HEADER)
     _add_label(text_frame, f"Жанр: {genre}", bg_color)
@@ -104,11 +103,7 @@ def _add_text_info(card, product, bg_color, qty):
 
 def _add_label(parent, text, bg_color, bold=False,
                size=FONT_SIZE_NORMAL, align="w"):
-    """
-    Добавляет метку с текстом.
-
-    ✅ ЗАДАНИЕ (ВЫПОЛНЕНО): единый стиль меток.
-    """
+    """Добавляет метку с текстом (единый стиль)."""
     tk.Label(parent, text=text, font=font(size, bold=bold),
              bg=bg_color, anchor=align).pack(fill="x")
 
@@ -116,7 +111,18 @@ def _add_label(parent, text, bg_color, bold=False,
 def _indicator(qty):
     """
     Индикатор «много/мало» (порог 5).
-
-    ✅ ЗАДАНИЕ (ВЫПОЛНЕНО).
+    С обработкой некорректных данных.
     """
+    try:
+        qty = int(qty)
+    except (TypeError, ValueError):
+        return "мало"
     return "много" if qty > 5 else "мало"
+
+
+def _open_view(parent, product, refresh=None):
+
+    """Открывает форму просмотра книги."""
+    
+    from view_form import ViewForm
+    ViewForm(parent, product, on_add_to_order=refresh)
