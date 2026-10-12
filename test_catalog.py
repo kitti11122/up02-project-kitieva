@@ -1,86 +1,114 @@
-"""Проверка вывода полей"""
+"""Тестирование каталога"""
 import database as db
 
 
-def test_fields():
-    """Проверяет, что все поля на месте."""
+def test_db_available():
+    """Проверяет, что БД доступна."""
+    try:
+        products = db.get_all_products()
+        return isinstance(products, list)
+    except Exception as e:
+        print(f"❌ БД недоступна: {e}")
+        return False
+
+
+def test_products_count():
+    """Проверяет, что товары загружены."""
     products = db.get_all_products()
-    print(f"Всего товаров: {len(products)}")
+    return len(products) > 0
 
-    required_count = 7  # для библиотеки 7 полей
-    errors = 0
 
+def test_product_fields():
+    """Проверяет, что у всех товаров достаточно полей."""
+    products = db.get_all_products()
     for p in products:
-        if len(p) < required_count:
+        if len(p) < 7:  # для библиотеки 7 полей
             print(f"❌ Товар id={p[0]}: мало полей ({len(p)})")
-            errors += 1
-
-    if errors == 0:
-        print("✅ Все товары содержат нужные поля")
-    else:
-        print(f"❌ Найдено ошибок: {errors}")
+            return False
+    return True
 
 
-def test_prices():
-    """
-    Проверяет, что у всех товаров есть цена.
-
-    ✅ ЗАДАНИЕ ИЗ ДЗ (ВЫПОЛНЕНО).
-    """
+def test_prices_are_numbers():
+    """Проверяет, что все цены — числа."""
     products = db.get_all_products()
-
     for p in products:
-        # Индекс цены — 4
-        if p[4] is None:
-            print(f"❌ Товар id={p[0]}: нет цены")
-            return
+        # Индекс цены = 4
+        if not isinstance(p[4], (int, float)):
+            print(f"❌ Товар id={p[0]}: цена не число")
+            return False
+    return True
 
-    print("✅ У всех товаров есть цена")
 
-
-def test_quantities():
-    """
-    Проверяет, что количество ≥ 0.
-
-    ✅ ЗАДАНИЕ ИЗ ДЗ (ВЫПОЛНЕНО).
-    """
+def test_quantity_not_negative():
+    """Проверяет, что количество не отрицательное."""
     products = db.get_all_products()
-
     for p in products:
-        # Индекс количества — 5
-        if p[5] is None or p[5] < 0:
-            print(f"❌ Товар id={p[0]}: некорректное количество")
-            return
+        # Индекс количества = 5
+        if p[5] < 0:
+            print(f"❌ Товар id={p[0]}: отрицательное количество")
+            return False
+    return True
 
-    print("✅ У всех товаров количество ≥ 0")
 
-
-def test_has_images():
+def test_names_not_empty():
     """
-    Проверяет, что хотя бы у одной книги есть обложка.
+    Проверяет, что у всех товаров есть название.
 
-    ✅ ЗАДАНИЕ ИЗ ДЗ (ВЫПОЛНЕНО).
+    ✅ ЗАДАНИЕ (ВЫПОЛНЕНО) — Пара 18, задание 6.6.
     """
     products = db.get_all_products()
+    for p in products:
+        # Индекс названия = 3
+        if not p[3]:
+            print(f"❌ Товар id={p[0]}: пустое название")
+            return False
+    return True
 
-    has_image = any(p[6] for p in products)  # индекс 6 — обложка
 
-    if has_image:
-        print("✅ Хотя бы у одной книги есть обложка")
+def test_has_image():
+    """
+    Проверяет, что хотя бы у одного товара есть обложка.
+
+
+    """
+    products = db.get_all_products()
+    has_image = any(p[6] for p in products)  # индекс 6 = обложка
+    return has_image
+
+
+def run_all_tests():
+    """Прогон всех тестов каталога."""
+    tests = [
+        ("БД доступна", test_db_available),
+        ("Товары загружены", test_products_count),
+        ("У всех товаров нужные поля", test_product_fields),
+        ("Все цены — числа", test_prices_are_numbers),
+        ("Количество не отрицательное", test_quantity_not_negative),
+        ("Названия не пустые", test_names_not_empty),
+        ("Хотя бы у одного товара есть обложка", test_has_image),
+    ]
+
+
+    print("ТЕСТИРОВАНИЕ КАТАЛОГА")
+
+
+    passed = 0
+    for name, func in tests:
+        result = func()
+        status = "✅" if result else "❌"
+        if result:
+            passed += 1
+        print(f"{status} {name}")
+
+
+    print(f"Пройдено: {passed} / {len(tests)}")
+
+    if passed == len(tests):
+        print("РЕЗУЛЬТАТ: ✅ УСПЕХ")
     else:
-        print("❌ Ни у одной книги нет обложки")
+        print("РЕЗУЛЬТАТ: ❌ ЕСТЬ ОШИБКИ")
+
 
 
 if __name__ == "__main__":
-    print("=" * 50)
-    print("ТЕСТИРОВАНИЕ КАТАЛОГА")
-    print("=" * 50)
-
-    test_fields()
-    test_prices()
-    test_quantities()
-    test_has_images()
-
-    print("=" * 50)
-    print("Тестирование завершено")
-    print("=" * 50)
+    run_all_tests()
