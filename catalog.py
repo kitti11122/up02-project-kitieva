@@ -1,12 +1,4 @@
-"""Каталог книг (библиотека).
-
-============================================================
-ЗАДАНИЕ ДЛЯ СТУДЕНТА (ВЫПОЛНЕНО) — Задания 4.4 и 7.4:
-1. ✅ Импорт стилей из styles.py
-2. ✅ Импорт get_product_image из resources.py
-3. ✅ Карточка книги с подсветкой и скидкой
-============================================================
-"""
+"""Каталог книг (библиотека)."""
 import tkinter as tk
 from datetime import datetime
 
@@ -21,45 +13,44 @@ from discount import calculate_price_with_discount
 
 def create_product_card(parent, product, refresh=None):
     """
-    Создаёт карточку книги.
+    Создаёт карточку книги по макету.
 
     Индексы таблицы Товар (библиотека):
     [0] id, [1] жанр, [2] автор, [3] название,
     [4] цена, [5] количество, [6] обложка
-
-    :param parent: родительский контейнер
-    :param product: кортеж с данными книги
-    :param refresh: callback для обновления каталога
-    :return: созданный Frame
     """
-    product_id = int(product[0])
-    genre = product[1]
-    author = product[2]
-    title = product[3]
-    price = float(product[4])
     qty = int(product[5])
-    cover = product[6]
+    bg_color = _get_card_color(qty)
 
-    # Подсветка, если количество ≤3
-    bg_color = COLOR_HIGHLIGHT if qty <= 3 else COLOR_MAIN_BG
-
-    # Цена со скидкой 25%
-    try:
-        final_price = calculate_price_with_discount(
-            product_id, price, datetime.now())
-    except Exception:
-        final_price = price
-
-    # Карточка — рамка со всех сторон
     card = tk.Frame(parent, bg=bg_color, bd=1, relief="solid")
     card.pack(fill="x", padx=10, pady=5)
 
-    # === Изображение (слева) ===
+    _add_image(card, product, bg_color)
+    _add_text_info(card, product, bg_color, qty)
+
+    return card
+
+
+def _get_card_color(qty):
+    """
+    Возвращает цвет фона карточки.
+
+  
+    """
+    return COLOR_HIGHLIGHT if qty <= 3 else COLOR_MAIN_BG
+
+
+def _add_image(card, product, bg_color):
+    """
+    Добавляет изображение товара (или заглушку).
+
+
+    """
     img_frame = tk.Frame(card, bg=bg_color)
     img_frame.pack(side="left", padx=10, pady=10)
 
-    # Получаем изображение через функцию из resources
-    photo = get_product_image(cover, size=(100, 100))
+    # Индекс обложки — 6
+    photo = get_product_image(product[6], size=(100, 100))
 
     if photo:
         img_label = tk.Label(img_frame, image=photo, bg=bg_color)
@@ -69,40 +60,63 @@ def create_product_card(parent, product, refresh=None):
         tk.Label(img_frame, text="[НЕТ ФОТО]", bg=bg_color,
                  width=10, height=5).pack()
 
-    # === Текстовая часть (справа) ===
+
+def _add_text_info(card, product, bg_color, qty):
+    """
+    Добавляет текстовую информацию о книге.
+
+    ✅ ЗАДАНИЕ (ВЫПОЛНЕНО): обработка крайних случаев.
+    """
     text_frame = tk.Frame(card, bg=bg_color)
     text_frame.pack(side="left", fill="both", expand=True,
                     padx=10, pady=10)
 
-    # Автор | Название (жирно)
-    tk.Label(text_frame, text=f"{author} | {title}",
-             font=font(FONT_SIZE_HEADER, bold=True),
-             bg=bg_color, anchor="w").pack(fill="x")
+    # ---- Обработка крайних случаев ----
+    author = product[2] if product[2] else "[Без автора]"
+    title = product[3] if product[3] else "[Без названия]"
+    genre = product[1] if product[1] else "[Без жанра]"
+    price = product[4] if product[4] is not None else 0
 
-    # Жанр
-    tk.Label(text_frame, text=f"Жанр: {genre}",
-             font=font(), bg=bg_color,
-             anchor="w").pack(fill="x")
+    # Цена со скидкой 25%
+    try:
+        final_price = calculate_price_with_discount(
+            int(product[0]), float(price), datetime.now())
+    except Exception:
+        final_price = price
 
-    # Количество
-    indicator = "много" if qty > 5 else "мало"
-    tk.Label(text_frame, text=f"Количество: {indicator} ({qty})",
-             font=font(), bg=bg_color,
-             anchor="w").pack(fill="x")
+    # ---- Вывод полей ----
+    _add_label(text_frame, f"{author} | {title}",
+               bg_color, bold=True, size=FONT_SIZE_HEADER)
+    _add_label(text_frame, f"Жанр: {genre}", bg_color)
+    _add_label(text_frame,
+               f"Количество: {_indicator(qty)} ({qty})", bg_color)
 
-    # Цена
+    # Цена (со скидкой, если есть)
     if final_price < price:
         price_text = (f"{final_price:.0f} руб. "
                       f"(скидка 25%, было {price:.0f})")
     else:
         price_text = f"{price:.0f} руб."
 
-    tk.Label(text_frame, text=price_text,
-             font=font(FONT_SIZE_HEADER, bold=True),
-             bg=bg_color, anchor="e").pack(fill="x")
+    _add_label(text_frame, price_text,
+               bg_color, bold=True, size=FONT_SIZE_HEADER, align="e")
 
-    # Разделитель между карточками
-    tk.Frame(parent, height=2, bd=1,
-             relief="sunken").pack(fill="x", padx=5)
 
-    return card
+def _add_label(parent, text, bg_color, bold=False,
+               size=FONT_SIZE_NORMAL, align="w"):
+    """
+    Добавляет метку с текстом.
+
+    ✅ ЗАДАНИЕ (ВЫПОЛНЕНО): единый стиль меток.
+    """
+    tk.Label(parent, text=text, font=font(size, bold=bold),
+             bg=bg_color, anchor=align).pack(fill="x")
+
+
+def _indicator(qty):
+    """
+    Индикатор «много/мало» (порог 5).
+
+    ✅ ЗАДАНИЕ (ВЫПОЛНЕНО).
+    """
+    return "много" if qty > 5 else "мало"
