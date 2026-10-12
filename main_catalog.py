@@ -1,10 +1,24 @@
-"""Главное окно приложения с каталогом."""
+"""Главное окно с каталогом.
+
+============================================================
+ЗАДАНИЕ ДЛЯ СТУДЕНТА (ВЫПОЛНЕНО) — Задания 5.3, 6.2, 7.4:
+1. ✅ Логотип в шапке (с сохранением пропорций)
+2. ✅ Иконка приложения (кроссплатформенно)
+3. ✅ Импорт стилей из styles.py
+4. ✅ Шрифт Calibri, цвета из КИМ
+============================================================
+"""
 import tkinter as tk
 from tkinter import ttk
-from PIL import Image, ImageTk
-from config import APP_TITLE, FONT_FAMILY
+import os
+
+from styles import (COLOR_SECONDARY_BG, COLOR_MAIN_BG,
+                    FONT_SIZE_TITLE, font)
+from config import APP_TITLE
 import database as db
 from catalog import create_product_card
+from resources import (load_image_proportional,
+                        PATH_LOGO, PATH_ICON)
 
 
 class CatalogWindow:
@@ -12,41 +26,66 @@ class CatalogWindow:
         self.root = tk.Tk()
         self.root.title(APP_TITLE)
         self.root.geometry("900x700")
+        self.root.configure(bg=COLOR_MAIN_BG)
+
+        # Иконка приложения
+        self.set_icon()
 
         self.build_ui()
         self.load_products()
 
-    def build_ui(self):
-        # Заголовок
-        header = tk.Frame(self.root, bg="#D2F6E7")
-        header.pack(fill="x")
-
-        # Логотип (если файл есть)
+    def set_icon(self):
+        """Устанавливает иконку приложения (кроссплатформенно)."""
         try:
-            logo = Image.open("resources/logo.png").resize((50, 50))
-            logo_photo = ImageTk.PhotoImage(logo)
-            logo_label = tk.Label(header, image=logo_photo, bg="#D2F6E7")
-            logo_label.image = logo_photo   # сохраняем ссылку!
-            logo_label.pack(side="left", padx=10, pady=10)
-        except Exception:
-            tk.Label(header, text="[ЛОГО]", bg="#D2F6E7",
-                     width=6, height=2).pack(side="left", padx=10)
+            if os.name == "nt":  # Windows
+                if os.path.exists(PATH_ICON):
+                    self.root.iconbitmap(PATH_ICON)
+            else:  # Linux/Mac
+                icon_img = load_image_proportional(
+                    PATH_ICON.replace(".ico", ".png"),
+                    max_size=(32, 32)
+                )
+                if icon_img:
+                    self.root.iconphoto(True, icon_img)
+                    self.root._icon_photo = icon_img  # сохраняем ссылку
+        except Exception as e:
+            print(f"Не удалось установить иконку: {e}")
 
-        # Название
-        tk.Label(header, text="КАТАЛОГ ТОВАРОВ",
-                 font=(FONT_FAMILY, 16, "bold"),
-                 bg="#D2F6E7").pack(side="left", pady=15)
+    def build_ui(self):
+        # Шапка с логотипом и заголовком
+        header = tk.Frame(self.root, bg=COLOR_SECONDARY_BG, height=80)
+        header.pack(fill="x")
+        header.pack_propagate(False)
+
+        # Логотип (слева) — с сохранением пропорций!
+        logo = load_image_proportional(PATH_LOGO, max_size=(60, 60))
+        if logo:
+            logo_label = tk.Label(header, image=logo,
+                                   bg=COLOR_SECONDARY_BG)
+            logo_label.image = logo
+            logo_label.pack(side="left", padx=15)
+        else:
+            tk.Label(header, text="[ЛОГОТИП]",
+                     bg=COLOR_SECONDARY_BG).pack(side="left", padx=15)
+
+        # Заголовок (по центру)
+        tk.Label(header, text="КАТАЛОГ КНИГ",
+                 font=font(FONT_SIZE_TITLE, bold=True),
+                 bg=COLOR_SECONDARY_BG).pack(expand=True)
 
         # Область с прокруткой
-        self.canvas = tk.Canvas(self.root, bg="white", highlightthickness=0)
+        self.canvas = tk.Canvas(self.root, bg="white",
+                                 highlightthickness=0)
         scrollbar = ttk.Scrollbar(self.root, orient="vertical",
                                    command=self.canvas.yview)
         self.catalog_frame = tk.Frame(self.canvas, bg="white")
         self.catalog_frame.bind(
             "<Configure>",
-            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+            lambda e: self.canvas.configure(
+                scrollregion=self.canvas.bbox("all"))
         )
-        self.canvas.create_window((0, 0), window=self.catalog_frame, anchor="nw")
+        self.canvas.create_window((0, 0), window=self.catalog_frame,
+                                   anchor="nw")
         self.canvas.configure(yscrollcommand=scrollbar.set)
         self.canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
