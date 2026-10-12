@@ -1,4 +1,4 @@
-"""Каталог книг"""
+"""Каталог книг (библиотека)"""
 import tkinter as tk
 from datetime import datetime
 
@@ -29,7 +29,6 @@ def create_product_card(parent, product, refresh=None):
     _add_image(card, product, bg_color)
     _add_text_info(card, product, bg_color, qty)
 
-
     def on_click(event, p=product):
         _open_view(parent, p, refresh)
 
@@ -52,7 +51,6 @@ def _add_image(card, product, bg_color):
     img_frame = tk.Frame(card, bg=bg_color)
     img_frame.pack(side="left", padx=10, pady=10)
 
-    # Индекс обложки — 6
     photo = get_product_image(product[6], size=(100, 100))
 
     if photo:
@@ -70,27 +68,23 @@ def _add_text_info(card, product, bg_color, qty):
     text_frame.pack(side="left", fill="both", expand=True,
                     padx=10, pady=10)
 
-  
     author = product[2] if product[2] else "[Без автора]"
     title = product[3] if product[3] else "[Без названия]"
     genre = product[1] if product[1] else "[Без жанра]"
     price = product[4] if product[4] is not None else 0
 
-    # Цена со скидкой 25%
     try:
         final_price = calculate_price_with_discount(
             int(product[0]), float(price), datetime.now())
     except Exception:
         final_price = price
 
-  
     _add_label(text_frame, f"{author} | {title}",
                bg_color, bold=True, size=FONT_SIZE_HEADER)
     _add_label(text_frame, f"Жанр: {genre}", bg_color)
     _add_label(text_frame,
                f"Количество: {_indicator(qty)} ({qty})", bg_color)
 
-    # Цена (со скидкой, если есть)
     if final_price < price:
         price_text = (f"{final_price:.0f} руб. "
                       f"(скидка 25%, было {price:.0f})")
@@ -103,16 +97,13 @@ def _add_text_info(card, product, bg_color, qty):
 
 def _add_label(parent, text, bg_color, bold=False,
                size=FONT_SIZE_NORMAL, align="w"):
-    """Добавляет метку с текстом (единый стиль)."""
+    """Добавляет метку с текстом."""
     tk.Label(parent, text=text, font=font(size, bold=bold),
              bg=bg_color, anchor=align).pack(fill="x")
 
 
 def _indicator(qty):
-    """
-    Индикатор «много/мало» (порог 5).
-    С обработкой некорректных данных.
-    """
+    """Индикатор «много/мало» (порог 5)."""
     try:
         qty = int(qty)
     except (TypeError, ValueError):
@@ -121,8 +112,10 @@ def _indicator(qty):
 
 
 def _open_view(parent, product, refresh=None):
+    """
+    Открывает форму просмотра книги.
 
-    """Открывает форму просмотра книги."""
-    
+    ✅ ЗАДАНИЕ ДЛЯ СТУДЕНТА (ВЫПОЛНЕНО) — Пара 19-20.
+    """
     from view_form import ViewForm
     ViewForm(parent, product, on_add_to_order=refresh)

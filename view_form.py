@@ -10,13 +10,15 @@ from styles import (
 from resources import load_image, get_product_image
 from discount import calculate_price_with_discount
 from error_handler import validate_positive_int
+from order_manager import (
+    add_order_to_db,
+    update_product_quantity,
+    get_product_quantity
+)
 
 
 class ViewForm:
-    """
-    Форма просмотра выбранной книги.
-    Открывается при клике на карточку в каталоге.
-    """
+    """Форма просмотра выбранной книги."""
 
     def __init__(self, parent, product, on_add_to_order=None):
         self.product = product
@@ -68,13 +70,11 @@ class ViewForm:
         info_frame = tk.Frame(main, bg=COLOR_MAIN_BG)
         info_frame.pack(side="left", fill="both", expand=True, padx=20)
 
-        # Обработка крайних случаев
         author = self.product[2] if self.product[2] else "[Без автора]"
         title = self.product[3] if self.product[3] else "[Без названия]"
         genre = self.product[1] if self.product[1] else "[Без жанра]"
         price = self.product[4] if self.product[4] is not None else 0
 
-        # Цена со скидкой
         try:
             final_price = calculate_price_with_discount(
                 int(self.product[0]), float(price), datetime.now())
@@ -94,7 +94,7 @@ class ViewForm:
         self._add_field(info_frame, "В наличии",
                         f"{self.product[5]} шт.")
 
-
+        # Поле ввода количества
         qty_frame = tk.Frame(self.window, bg=COLOR_MAIN_BG)
         qty_frame.pack(pady=10)
 
@@ -138,21 +138,15 @@ class ViewForm:
                  bg=COLOR_MAIN_BG).pack(side="left")
 
     def add_to_order(self):
+        
+        """Обработчик кнопки «Добавить в заказ»."""
 
-        """Обработчик кнопки «Добавить в заказ»"""
-
-        # 1. Проверка callback
-        if not self.on_add_to_order:
-            messagebox.showinfo("Информация",
-                                 "Функция в разработке")
-            return
-
-        # 2. Проверка товара
+        # 1. Проверка товара
         if not self.product:
             messagebox.showerror("Ошибка", "Товар не выбран")
             return
 
-        # 3. Валидация количества через validate_positive_int
+        # 2. Валидация количества
         ok, result = validate_positive_int(
             self.qty_var.get(), "Количество")
         if not ok:
@@ -160,22 +154,46 @@ class ViewForm:
             return
 
         qty = result
-        available = int(self.product[5])
+        product_id = int(self.product[0])
 
-        # 4. Проверка, что хватает на складе
-        if qty > available:
+        # 3. Проверка остатка
+        current_qty = get_product_quantity(product_id)
+        if current_qty < 1:
             messagebox.showwarning(
-                "Ошибка",
-                f"В наличии только {available} шт.")
+                "Товар закончился",
+                f"Книги «{self.product[3]}» больше нет")
             return
 
-        # 5. Обработка исключений
+        if qty > current_qty:
+            messagebox.showwarning(
+                "Ошибка",
+                f"Доступно только {current_qty} шт.")
+            return
+
+        # 4-5. Сохранение заказа + уменьшение остатка
         try:
-            self.on_add_to_order(self.product)
-            messagebox.showinfo(
-                "Успех",
-                f"Книга «{self.product[3]}» × {qty} шт. "
-                f"добавлена в заказ")
+            client = "Иванов Иван Иванович"  # заглушка
+            order_id = add_order_to_db(client, product_id, qty)
+
+            if order_id:
+                new_qty = current_qty - qty
+                update_product_quantity(product_id, new_qty)
+
+                messagebox.showinfo(
+                    "Успех",
+                    f"Заказ №{order_id} оформлен!\n"
+                    f"Книга «{self.product[3]}» × {qty} шт.")
+
+                # 6. Обновить каталог
+                if self.on_add_to_order:
+                    self.on_add_to_order()
+
+                self.window.destroy()
+            else:
+                messagebox.showerror(
+                    "Ошибка",
+                    "Не удалось сохранить заказ")
+
         except Exception as e:
             messagebox.showerror(
                 "Ошибка заказа",
